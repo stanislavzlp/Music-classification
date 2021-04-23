@@ -14,7 +14,7 @@ from data_loaders import train_dataloader, val_dataloader
 from model import resnet_model
 from tools import TrainEpoch, ValidEpoch
 
-EPOCHS = 15
+EPOCHS = 20
 
 loss = BCELoss()  # функция потерь
 
@@ -25,7 +25,10 @@ accuracy = accuracy_score  # метрика accuracy
 accuracy.__name__ = 'accuracy'
 
 
+
 optimizer = Adam(resnet_model.parameters())  # Оптимизатор
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
+
 device = 'cuda:0'
 
 train_epoch = TrainEpoch(
@@ -50,8 +53,8 @@ for i in tqdm(range(EPOCHS)):
 
     train_logs = train_epoch.run(train_dataloader)
     valid_logs = valid_epoch.run(val_dataloader)
+    scheduler.step(valid_logs['loss'])
 
-
-torch.save(resnet_model, f'saved_model_{valid_logs["f1"]}')  # Пишем в название модели f1 score на валидационной выборке
+torch.save(resnet_model, f'saved_model_{valid_logs["f1"]:.2f}')  # Пишем в название модели f1 score на валидационной выборке
 
 
